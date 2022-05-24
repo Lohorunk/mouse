@@ -1,6 +1,5 @@
 # Package
 
-name        = "mouse"
 version     = "1.0"
 author      = "hiikion"
 description = "Mouse interactions in nim"
