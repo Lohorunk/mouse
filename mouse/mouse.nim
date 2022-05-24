@@ -66,7 +66,7 @@ when defined(windows):
     proc release*(button: ButtonTuple, x = 0, y = 0) =
         mouse_event(DWORD(button.Release), DWORD(x), DWORD(y), 0, 0)
 
-    proc move*(x: int32, y: int32, `type`: string) =
+    proc move*(x: int32, y: int32, `type` = Relative) =
         if `type` == "relative":
             mouse_event(0x1, DWORD(x), DWORD(y), 0, 0)
         elif `type` == "absolute":
