@@ -18,7 +18,7 @@ package for interacting with the mouse
 ```nim
 import mouse
 
-# On linux the button needs to bee a string
+# On linux the button needs to be a string
 click(Left) 
 press(Left)
 realese(Left)
