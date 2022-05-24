@@ -1,5 +1,6 @@
-# nim-mouse
+# mouse
 
+[![](https://raw.githubusercontent.com/hiikion/mouse/main/assets/made-with-nim.svg)](https://raw.githubusercontent.com/hiikion/mouse/main/assets/made-with-nim.svg)
 
 package for interacting with the mouse 
 ## installing
