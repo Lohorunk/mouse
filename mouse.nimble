@@ -1,6 +1,6 @@
 # Package
 
-version     = "1.0"
+version     = "1.1"
 author      = "hiikion"
 description = "Mouse interactions in nim"
 license     = "MPL2.0"
