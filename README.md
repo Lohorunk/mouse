@@ -2,30 +2,29 @@
 
 [![](https://raw.githubusercontent.com/hiikion/mouse/main/assets/made-with-nim.svg)](https://raw.githubusercontent.com/hiikion/mouse/main/assets/made-with-nim.svg)
 
-package for interacting with the mouse 
-## installing
+This library allows you to programmatically control the mouse. 
+## Installing
 ```
 nimble install mouse
 ```
-## suported platforms
-| Platform  | Is suported  |
+## Suported platforms
+| Platform  | Is supported  |
 | ------------ | ------------ |
 |  Windows  |  🟢  |
 |  Linux  |  🟢  |
 |  Mac  |  🔴 |
 
-## examples
-### universal
+## Examples
+### Universal
 ```nim
 import mouse
 
-# On linux the button needs to be a string
 click(Left) 
 press(Left)
-realese(Left)
+release(Left)
 move(30, 30)
 ```
-### windows only
+### Windows-only
 ```nim
 import mouse
 import winim/lean # needed for isPressed function (virtual key codes)
