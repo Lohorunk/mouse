@@ -4,8 +4,9 @@
 
 package for interacting with the mouse 
 ## installing
-> nimble install mouse
-
+```
+nimble install mouse
+```
 ## suported platforms
 | Platform  | Is suported  |
 | ------------ | ------------ |
