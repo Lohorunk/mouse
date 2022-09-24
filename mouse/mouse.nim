@@ -1,4 +1,4 @@
-import std/[os, strutils, strformat]
+import std/[os, strutils, strformat, osproc]
 
 type
     Vec2D* = tuple
@@ -105,28 +105,63 @@ when defined(windows):
         var finalAmount: int = amount * globalDelta
         mouse_event(DWORD(ScrollOrientationToEvent[orientation]), 0, 0, DWORD(finalAmount), 0)
 
-    proc isPressed*(button: int32): bool =
-        bool(GetAsyncKeyState(button))
+    #proc isPressed*(button: int32): bool = note: temp removed
+    #    bool(GetAsyncKeyState(button))
 
     proc getPos*: Point =
         discard GetCursorPos(result)
 
-when defined(linux):
+when defined(linux) or defined(darwin):
+    type Point = tuple
+        x: int
+        y: int
+
     proc buttonToXdotool(button: MouseButton): string =
         $(int(button) + 1)
 
     proc click*(button: MouseButton) =
         var button = buttonToXdotool(button)
-        let cmd = fmt"xdo button_press -k {button};xdo button_release -k {button};"
-        discard execShellCmd(cmd) # todo: handle xdo errors
+        let cmd = fmt"xdotool click {button}"
+        discard execShellCmd(cmd) # todo: handle xdotool errors (like thats ever gona hapen)
 
     proc press*(button: MouseButton) =
         var button = buttonToXdotool(button)
-        discard execShellCmd fmt"xdo button_press -k {button}"
+        discard execShellCmd fmt"xdotool mousedown {button}"
 
     proc release*(button: MouseButton) =
         var button = buttonToXdotool(button)
-        discard execShellCmd fmt"xdo button_release -k {button}"
+        discard execShellCmd fmt"xdotool mouseup {button}"
     
-    proc move*(x, y: int) =
-        discard execShellCmd fmt"xdo pointer_motion -x {x} -y {y};"
+    proc move*(x, y: int, typ = Relative) =
+        case typ
+        of Relative:
+            discard execShellCmd fmt"xdotool mousemove {x} {y}"
+        of Absolute:
+            discard execShellCmd fmt"xdotool mousemove_relative {x} {y}"
+
+    proc getPos*: Point =
+        var 
+            cmd = execCmdEx "xdotool getmouselocation"
+            splited = cmd.output.split(" ")
+            x = parseInt(splited[0].split(":")[1])
+            y = parseInt(splited[1].split(":")[1])
+
+        return (x,y)
+    
+    proc smoothMove*(x: int, y: int, smoothingStep: float, sleep = 3, typ = Absolute) = 
+        var currPos: Point = getPos()
+
+        var
+            x = x
+            y = y
+        if typ == Relative:
+            (x, y) = calcRelative((int(currPos.x), int(currPos.y)), (x,y))
+
+        var i = 0.0
+        while i < 1.0:
+            var vec = lerp((int(currPos.x), int(currPos.y)), (x, y), i)
+
+            move(vec.x, vec.y, Absolute)
+
+            sleep(sleep)
+            i += smoothingStep

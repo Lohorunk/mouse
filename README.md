@@ -7,12 +7,23 @@ This library allows you to programmatically control the mouse.
 ```
 nimble install mouse
 ```
+
+### installing deps on linux
+#### arch: `sudo pacman -S xdotool`
+#### ubuntu/debian: `apt-get install xdotool`
+#### fedora: `dnf install xdotool`
+#### openSUSE `zypper install xdotool`
+#### other: `brew install xdotool`
+
+### installing dependencies for macos
+#### `brew install xdotool`
+
 ## Suported platforms
 | Platform  | Is supported  |
 | ------------ | ------------ |
 |  Windows  |  🟢  |
 |  Linux  |  🟢  |
-|  Mac  |  🔴 |
+|  Mac  |  🟢 |
 
 ## Examples
 ### Universal
@@ -23,19 +34,15 @@ click(Left)
 press(Left)
 release(Left)
 move(30, 30)
+
+while true:
+    var position = getPos()
+    
+    echo fmt"position: {position}"
 ```
 ### Windows-only
 ```nim
 import mouse
-import winim/lean # needed for isPressed function (virtual key codes)
 
-
-smoothMove(30, 30, 0.01)
 scroll(5)
-
-while true:
-    var pressed = isPressed(VK_LBUTTON)
-    var position = getPos()
-    
-    echo fmt"is pressed: {pressed}, position: {position}"
 ```
