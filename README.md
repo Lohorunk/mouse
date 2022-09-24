@@ -9,14 +9,14 @@ nimble install mouse
 ```
 
 ### installing deps on linux
-#### arch: `sudo pacman -S xdotool`
-#### ubuntu/debian: `apt-get install xdotool`
-#### fedora: `dnf install xdotool`
-#### openSUSE `zypper install xdotool`
-#### other: `brew install xdotool`
+arch: `sudo pacman -S xdotool`
+ubuntu/debian: `apt-get install xdotool`
+fedora: `dnf install xdotool`
+openSUSE `zypper install xdotool`
+other: `brew install xdotool`
 
 ### installing dependencies for macos
-#### `brew install xdotool`
+`brew install xdotool`
 
 ## Suported platforms
 | Platform  | Is supported  |
