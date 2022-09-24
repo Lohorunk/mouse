@@ -8,15 +8,15 @@ This library allows you to programmatically control the mouse.
 nimble install mouse
 ```
 
-### installing deps on linux
-arch: `sudo pacman -S xdotool`
-ubuntu/debian: `apt-get install xdotool`
-fedora: `dnf install xdotool`
-openSUSE `zypper install xdotool`
-other: `brew install xdotool`
+### installing deps on linux <br>
+arch: `sudo pacman -S xdotool` <br>
+ubuntu/debian: `apt-get install xdotool` <br>
+fedora: `dnf install xdotool` <br>
+openSUSE `zypper install xdotool` <br>
+other: `brew install xdotool` <br>
 
-### installing dependencies for macos
-`brew install xdotool`
+### installing dependencies for macos <br>
+`brew install xdotool` <br>
 
 ## Suported platforms
 | Platform  | Is supported  |
