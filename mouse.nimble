@@ -1,8 +1,8 @@
 # Package
 
-version     = "2.0"
+version     = "2.1"
 author      = "hiikion"
-description = "Mouse interactions in nim"
+description = "Programmatic control of the mouse"
 license     = "MPL2.0"
 
 # Deps
@@ -10,4 +10,7 @@ license     = "MPL2.0"
 requires "nim >= 0.10.0"
 
 when defined(windows):
-    requires "winim >= 3.8.0"
+    requires "winim"
+
+when defined(linux):
+    requires "x11"

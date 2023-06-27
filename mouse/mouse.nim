@@ -1,4 +1,4 @@
-import std/[os, strutils, strformat, osproc]
+import std/os
 
 type
     Vec2D* = tuple
@@ -11,8 +11,8 @@ type
     PositionKind* = enum
         Relative, Absolute
     
-    ScrollOrientation* = enum
-        Horizontal, Vertical
+    ScrollDirection* = enum
+        Up, Down
 
 proc lerp*(start: Vec2D, finish: Vec2D, dist: float): Vec2D =
     var
@@ -58,12 +58,6 @@ when defined(windows):
         ]
         X*: ButtonTuple = (MOUSEEVENTF_XDOWN, MOUSEEVENTF_XUP)
 
-        ScrollOrientationToEvent = [
-            Horizontal: MOUSEEVENTF_HWHEEL,
-            Vertical: MOUSEEVENTF_WHEEL
-        ]
-
-
 
     proc click*(button: MouseButton, x = 0, y = 0) =
         mouse_event(DWORD(MouseButtonToEvent[button].Press), DWORD(x), DWORD(y), 0, 0)
@@ -75,21 +69,21 @@ when defined(windows):
     proc release*(button: MouseButton, x = 0, y = 0) =
         mouse_event(DWORD(MouseButtonToEvent[button].Release), DWORD(x), DWORD(y), 0, 0)
 
-    proc move*(x, y: int, typ = Relative) =
-        case typ
+    proc move*(x, y: int, `type` = Relative) =
+        case `type`
         of Relative:
             mouse_event(0x1, DWORD(x), DWORD(y), 0, 0)
         of Absolute:
             SetCursorPos(int32 x, int32 y)
 
-    proc smoothMove*(x: int, y: int, smoothingStep: float, sleep = 3, typ = Absolute) = 
+    proc smoothMove*(x: int, y: int, smoothingStep: float = 0.001, sleep = 1, `type` = Absolute) = 
         var currPos: Point
         GetCursorPos(currPos)
 
         var
             x = x
             y = y
-        if typ == Relative:
+        if `type` == Relative:
             (x, y) = calcRelative((int(currPos.x), int(currPos.y)), (x,y))
 
         var i = 0.0
@@ -101,60 +95,101 @@ when defined(windows):
             sleep(sleep)
             i += smoothingStep
 
-    proc scroll*(amount: int, orientation = Vertical, globalDelta = 120) =
-        var finalAmount: int = amount * globalDelta
-        mouse_event(DWORD(ScrollOrientationToEvent[orientation]), 0, 0, DWORD(finalAmount), 0)
+    proc scroll*(amount: int, direction: ScrollDirection) =
+        var finalAmount: int = amount * 120
+        if direction == Down:
+            finalAmount = -finalAmount
 
-    #proc isPressed*(button: int32): bool = note: temp removed
-    #    bool(GetAsyncKeyState(button))
+        mouse_event(DWORD(MOUSEEVENTF_WHEEL), 0, 0, DWORD(finalAmount), 0)
 
     proc getPos*: Point =
         discard GetCursorPos(result)
 
-when defined(linux) or defined(darwin):
+when defined(linux):
+    import x11/[xlib, xtst, x]
+
     type Point = tuple
         x: int
         y: int
 
-    proc buttonToXdotool(button: MouseButton): string =
-        $(int(button) + 1)
+    proc convertButton(button: MouseButton): cuint =
+        cuint(int(button) + 1)
 
     proc click*(button: MouseButton) =
-        var button = buttonToXdotool(button)
-        let cmd = fmt"xdotool click {button}"
-        discard execShellCmd(cmd) # todo: handle xdotool errors (like thats ever gona hapen)
+        let display = XOpenDisplay(nil)
+
+        discard XTestFakeButtonEvent(display, convertButton(button), XBool(true), 0)
+        discard XTestFakeButtonEvent(display, convertButton(button), XBool(false), 0)
+
+        discard XFlush(display)
+        discard XCloseDisplay(display)
 
     proc press*(button: MouseButton) =
-        var button = buttonToXdotool(button)
-        discard execShellCmd fmt"xdotool mousedown {button}"
+        let display = XOpenDisplay(nil)
+
+        discard XTestFakeButtonEvent(display, convertButton(button), XBool(true), 0)
+
+        discard XFlush(display)
+        discard XCloseDisplay(display)
 
     proc release*(button: MouseButton) =
-        var button = buttonToXdotool(button)
-        discard execShellCmd fmt"xdotool mouseup {button}"
+        let display = XOpenDisplay(nil)
+
+        discard XTestFakeButtonEvent(display, convertButton(button), XBool(false), 0)
+
+        discard XFlush(display)
+        discard XCloseDisplay(display)
     
-    proc move*(x, y: int, typ = Relative) =
-        case typ
-        of Relative:
-            discard execShellCmd fmt"xdotool mousemove {x} {y}"
+    proc move*(x, y: int, `type` = Relative) =
+        let
+            display = XOpenDisplay(nil)
+            screenRoot = RootWindow(display, 0)
+
+        case `type`:
         of Absolute:
-            discard execShellCmd fmt"xdotool mousemove_relative {x} {y}"
+            discard XWarpPointer(display, 0, screenRoot, 0,0,0,0, cint(x),cint(y))
+        of Relative:
+            discard XTestFakeRelativeMotionEvent(display, cint(x), cint(y), 0)
+        
+        discard XFlush(display)
+        discard XCloseDisplay(display)
 
     proc getPos*: Point =
+        let 
+            display = XOpenDisplay(nil)
+            screenRoot = XRootWindow(display, 0)
         var 
-            cmd = execCmdEx "xdotool getmouselocation"
-            splited = cmd.output.split(" ")
-            x = parseInt(splited[0].split(":")[1])
-            y = parseInt(splited[1].split(":")[1])
+            qRoot, qChild: Window
+            x, y, qChildX, qChildY: cint
+            qMask: cuint
 
-        return (x,y)
+        discard XQueryPointer(display, screenRoot, qRoot.addr, qChild.addr, x.addr, y.addr, qChildX.addr, qChildY.addr, qMask.addr)
+        discard XCloseDisplay(display)
+        result.x = int(x.cfloat)
+        result.y = int(y.cfloat)
+
+    proc scroll*(amount: int, direction: ScrollDirection) =
+        let display = XOpenDisplay(nil)
+        var eventInt: int
+
+        if direction == Up: 
+            eventInt = 4
+        else:
+            eventInt = 5
+
+        for i in countup(1, amount):
+            discard XTestFakeButtonEvent(display, cuint(eventInt), XBool(true), 0)
+
+        discard XFlush(display)
+        discard XCloseDisplay(display)
     
-    proc smoothMove*(x: int, y: int, smoothingStep: float, sleep = 3, typ = Absolute) = 
+    proc smoothMove*(x: int, y: int, smoothingStep: float = 0.001, sleep = 1, `type` = Absolute) =  
         var currPos: Point = getPos()
 
         var
             x = x
             y = y
-        if typ == Relative:
+        if `type` == Relative:
             (x, y) = calcRelative((int(currPos.x), int(currPos.y)), (x,y))
 
         var i = 0.0
