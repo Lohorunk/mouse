@@ -12,5 +12,14 @@ nimble install mouse
 |  Linux  |  full  |  X11  |
 |  Mac  |  none |  none  |
 
-# Docs
-todo
+# Cheat Sheet
+```nim
+click(button: MouseButton, x = 0, y = 0)
+press(button: MouseButton, x = 0, y = 0)
+release(button: MouseButton, x = 0, y = 0)
+move(x, y: int, `type` = Relative)
+smoothMove(x: int, y: int, smoothingStep: float = 0.001, sleep = 1, `type` = Absolute)
+scroll(amount: int, direction: ScrollDirection)
+
+getPos() # -> Point
+```
