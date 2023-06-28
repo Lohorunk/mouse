@@ -76,7 +76,7 @@ when defined(windows):
         of Absolute:
             SetCursorPos(int32 x, int32 y)
 
-    proc smoothMove*(x: int, y: int, smoothingStep: float = 0.001, sleep = 1, `type` = Absolute) = 
+    proc smoothMove*(x: int, y: int, smoothingStep: float = 0.005, sleep = 3, `type` = Absolute) = 
         var currPos: Point
         GetCursorPos(currPos)
 
@@ -112,39 +112,30 @@ when defined(linux):
         x: int
         y: int
 
+    let
+        display = XOpenDisplay(nil)
+        screenRoot = RootWindow(display, 0)
+
     proc convertButton(button: MouseButton): cuint =
         cuint(int(button) + 1)
 
     proc click*(button: MouseButton) =
-        let display = XOpenDisplay(nil)
-
         discard XTestFakeButtonEvent(display, convertButton(button), XBool(true), 0)
         discard XTestFakeButtonEvent(display, convertButton(button), XBool(false), 0)
 
         discard XFlush(display)
-        discard XCloseDisplay(display)
 
     proc press*(button: MouseButton) =
-        let display = XOpenDisplay(nil)
-
         discard XTestFakeButtonEvent(display, convertButton(button), XBool(true), 0)
 
         discard XFlush(display)
-        discard XCloseDisplay(display)
 
     proc release*(button: MouseButton) =
-        let display = XOpenDisplay(nil)
-
         discard XTestFakeButtonEvent(display, convertButton(button), XBool(false), 0)
 
         discard XFlush(display)
-        discard XCloseDisplay(display)
     
     proc move*(x, y: int, `type` = Relative) =
-        let
-            display = XOpenDisplay(nil)
-            screenRoot = RootWindow(display, 0)
-
         case `type`:
         of Absolute:
             discard XWarpPointer(display, 0, screenRoot, 0,0,0,0, cint(x),cint(y))
@@ -152,24 +143,18 @@ when defined(linux):
             discard XTestFakeRelativeMotionEvent(display, cint(x), cint(y), 0)
         
         discard XFlush(display)
-        discard XCloseDisplay(display)
 
     proc getPos*: Point =
-        let 
-            display = XOpenDisplay(nil)
-            screenRoot = XRootWindow(display, 0)
         var 
-            qRoot, qChild: Window
-            x, y, qChildX, qChildY: cint
-            qMask: cuint
+            root, child: Window
+            x, y, childx, childy: cint
+            mask: cuint
 
-        discard XQueryPointer(display, screenRoot, qRoot.addr, qChild.addr, x.addr, y.addr, qChildX.addr, qChildY.addr, qMask.addr)
-        discard XCloseDisplay(display)
+        discard XQueryPointer(display, screenRoot, root.addr, child.addr, x.addr, y.addr, childx.addr, childy.addr, mask.addr)
         result.x = int(x.cfloat)
         result.y = int(y.cfloat)
 
     proc scroll*(amount: int, direction: ScrollDirection) =
-        let display = XOpenDisplay(nil)
         var eventInt: int
 
         if direction == Up: 
@@ -181,9 +166,8 @@ when defined(linux):
             discard XTestFakeButtonEvent(display, cuint(eventInt), XBool(true), 0)
 
         discard XFlush(display)
-        discard XCloseDisplay(display)
     
-    proc smoothMove*(x: int, y: int, smoothingStep: float = 0.001, sleep = 1, `type` = Absolute) =  
+    proc smoothMove*(x: int, y: int, smoothingStep: float = 0.005, sleep = 3, `type` = Absolute) =  
         var currPos: Point = getPos()
 
         var
